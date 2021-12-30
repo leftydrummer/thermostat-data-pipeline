@@ -10,8 +10,11 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.Filter;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
@@ -50,10 +53,10 @@ public class TemperatureData {
         //options.setSdkContainerImage("google/cloud-sdk:latest");
         //ArrayList<String> experiments = new ArrayList<String>();
         //experiments.add("use_runner_v2");
-       // options.setExperiments(experiments);
+        // options.setExperiments(experiments);
         Pipeline pipe = Pipeline.create(options);
 
-        PCollection<TempDataObj> messages = pipe.apply("ReadPubSub", PubsubIO.readStrings().fromSubscription(SUBSCRIPTION)).apply("Format for BQ", ParDo.of(new parsePubSubToTempDataObjFn()));
+        PCollection<TempDataObj> messages = pipe.apply("ReadPubSub", PubsubIO.readStrings().fromSubscription(SUBSCRIPTION)).apply("Filter non TEMP events", Filter.by(msg -> StringUtils.containsIgnoreCase(msg, "ambientTemperatureCelsius"))).apply("Format for BQ", ParDo.of(new parsePubSubToTempDataObjFn()));
         messages.apply("WriteToBQ", BigQueryIO.<TempDataObj>write()
                 .to(DESTINATION_TABLE_SPEC)
                 .withSchema(TABLE_SCHEMA)
@@ -66,21 +69,32 @@ public class TemperatureData {
 
 
     }
-    public static TempDataObj parsePubSubToTempDataObj(String message){
-        JSONObject json = new JSONObject(message);
-        String temp = json.getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature").getString("ambientTemperatureCelsius");
-        String timestamp = json.getString("timestamp");
-        return new TempDataObj(temp, timestamp);
-    }
+
 }
 
 class parsePubSubToTempDataObjFn extends DoFn<String, TempDataObj> implements Serializable {
     @ProcessElement
-    public void processElement(@Element String message, OutputReceiver<TempDataObj> out){
+    public void processElement(@Element String message, OutputReceiver<TempDataObj> out) {
         JSONObject json = new JSONObject(message);
-        String temp = json.getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature").getString("ambientTemperatureCelsius");
-        String timestamp = json.getString("timestamp");
-        out.output(new TempDataObj(temp, timestamp));
+        System.out.println("!!!!!" + json);
+        String temp_f = null;
+        try {
+            float temp_c = json.getJSONObject("resourceUpdate").getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature").getFloat("ambientTemperatureCelsius");
+            temp_f = String.valueOf((temp_c * 1.8) + 32);
+        } catch (JSONException e) {
+
+        }
+        String ts_final = null;
+
+        try {
+            String timestamp = json.getString("timestamp");
+            String datePart = timestamp.split("T")[0];
+            String timePart = timestamp.split("T")[1].substring(0, 8);
+            ts_final = datePart + " " + timePart;
+        } catch (JSONException e) {
+        }
+
+        out.output(new TempDataObj(temp_f, ts_final));
     }
 
 }
