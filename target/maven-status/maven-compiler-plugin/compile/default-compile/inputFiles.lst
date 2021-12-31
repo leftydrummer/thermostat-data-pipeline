@@ -1,3 +1,4 @@
-/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/TempDataObj.java
-/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/TemperatureData.java
-/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/App.java
+/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/Data/TempDataObj.java
+/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/PipelineJobs/HumidityDataPipeline.java
+/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/PipelineJobs/TemperatureDataPipeline.java
+/home/nwolf/proj/thermostat-data-pipeline/src/main/java/com/neilldev/nest/Data/HumidDataObj.java

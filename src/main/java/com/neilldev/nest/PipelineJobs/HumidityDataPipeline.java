@@ -1,8 +1,9 @@
-package com.neilldev.nest;
+package com.neilldev.nest.PipelineJobs;
 
 import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.api.services.bigquery.model.TableSchema;
+import com.neilldev.nest.Data.HumidDataObj;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
@@ -21,11 +22,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class TemperatureData {
+public class HumidityDataPipeline {
     public static void main(String[] args) {
 
-        String SUBSCRIPTION = "projects/thermostat-data--1640722466265/subscriptions/nest-device-events";
-        String DESTINATION_TABLE_SPEC = "thermostat-data--1640722466265:nest_events.thermo_events";
+        String SUBSCRIPTION = "projects/thermostat-data--1640722466265/subscriptions/nest-device-events-b";
+        String DESTINATION_TABLE_SPEC = "thermostat-data--1640722466265:thermo_events.humidity_events";
         String PROJECT_ID = "thermostat-data--1640722466265";
 
         TableSchema TABLE_SCHEMA =
@@ -34,53 +35,52 @@ public class TemperatureData {
                         .setFields(
                                 Arrays.asList(
                                         new TableFieldSchema()
-                                                .setName("temp_f")
+                                                .setName("humidity_percent")
                                                 .setType("FLOAT")
                                                 .setMode("NULLABLE"),
                                         new TableFieldSchema()
-                                                .setName("timestamp")
-                                                .setType("DATETIME")
+                                                .setName("timestamp_utc")
+                                                .setType("TIMESTAMP")
                                                 .setMode("NULLABLE")));
 
         DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
         options.setRunner(DataflowRunner.class);
         options.setProject(PROJECT_ID);
         options.setRegion("us-central1");
-        options.setDiskSizeGb(1);
         options.setNumberOfWorkerHarnessThreads(1);
         options.setMaxNumWorkers(1);
-        options.setStagingLocation("gs://thermoevents_tmp/pipeline_stg");
-        //options.setSdkContainerImage("google/cloud-sdk:latest");
-        //ArrayList<String> experiments = new ArrayList<String>();
-        //experiments.add("use_runner_v2");
-        // options.setExperiments(experiments);
+        options.setStagingLocation("gs://thermoevents_tmp/pipeline_stg_humid");
+        options.setEnableStreamingEngine(true);
+        options.setWorkerMachineType("e2-small");
+
+
         Pipeline pipe = Pipeline.create(options);
 
-        PCollection<TempDataObj> messages = pipe.apply("ReadPubSub", PubsubIO.readStrings().fromSubscription(SUBSCRIPTION)).apply("Filter non TEMP events", Filter.by(msg -> StringUtils.containsIgnoreCase(msg, "ambientTemperatureCelsius"))).apply("Format for BQ", ParDo.of(new parsePubSubToTempDataObjFn()));
-        messages.apply("WriteToBQ", BigQueryIO.<TempDataObj>write()
+        PCollection<HumidDataObj> messages = pipe.apply("ReadPubSub", PubsubIO.readStrings().fromSubscription(SUBSCRIPTION)).apply("Filter non HUMIDITY events", Filter.by(msg -> StringUtils.containsIgnoreCase(msg, "ambientHumidityPercent"))).apply("Format for BQ", ParDo.of(new parsePubSubToHumidDataObjFn()));
+        messages.apply("WriteToBQ", BigQueryIO.<HumidDataObj>write()
                 .to(DESTINATION_TABLE_SPEC)
                 .withSchema(TABLE_SCHEMA)
-                .withFormatFunction((TempDataObj elem) -> new TableRow().set("temp_f", elem.temp).set("timestamp", elem.timestamp))
+                .withFormatFunction((HumidDataObj elem) -> new TableRow().set("humidity_percent", elem.humidity_percent).set("timestamp_utc", elem.timestamp))
                 .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
                 .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND)
         );
 
         pipe.run().waitUntilFinish();
 
-
     }
 
 }
 
-class parsePubSubToTempDataObjFn extends DoFn<String, TempDataObj> implements Serializable {
+class parsePubSubToHumidDataObjFn extends DoFn<String, HumidDataObj> implements Serializable {
     @ProcessElement
-    public void processElement(@Element String message, OutputReceiver<TempDataObj> out) {
+    public void processElement(@Element String message, OutputReceiver<HumidDataObj> out) {
+
         JSONObject json = new JSONObject(message);
-        System.out.println("!!!!!" + json);
-        String temp_f = null;
+
+        String humidity = null;
         try {
-            float temp_c = json.getJSONObject("resourceUpdate").getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature").getFloat("ambientTemperatureCelsius");
-            temp_f = String.valueOf((temp_c * 1.8) + 32);
+             humidity = String.valueOf(json.getJSONObject("resourceUpdate").getJSONObject("traits").getJSONObject("sdm.devices.traits.Humidity").getFloat("ambientHumidityPercent"));
+
         } catch (JSONException e) {
 
         }
@@ -94,7 +94,7 @@ class parsePubSubToTempDataObjFn extends DoFn<String, TempDataObj> implements Se
         } catch (JSONException e) {
         }
 
-        out.output(new TempDataObj(temp_f, ts_final));
+        out.output(new HumidDataObj(humidity, ts_final));
     }
 
 }

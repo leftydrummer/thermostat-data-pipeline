@@ -1,4 +1,4 @@
-package com.neilldev.nest;
+package com.neilldev.nest.Data;
 
 import java.io.Serializable;
 import java.util.Objects;

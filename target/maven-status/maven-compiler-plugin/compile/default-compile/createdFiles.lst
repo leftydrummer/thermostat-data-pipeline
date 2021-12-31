@@ -1,4 +1,6 @@
-com/neilldev/nest/TempDataObj.class
-com/neilldev/nest/TemperatureData.class
-com/neilldev/nest/parsePubSubToTempDataObjFn.class
-com/neilldev/nest/App.class
+com/neilldev/nest/PipelineJobs/TemperatureDataPipeline.class
+com/neilldev/nest/PipelineJobs/parsePubSubToHumidDataObjFn.class
+com/neilldev/nest/PipelineJobs/parsePubSubToTempDataObjFn.class
+com/neilldev/nest/Data/HumidDataObj.class
+com/neilldev/nest/Data/TempDataObj.class
+com/neilldev/nest/PipelineJobs/HumidityDataPipeline.class
