@@ -13,11 +13,11 @@ The pipeline breaks down into the following parts:
 
 Bonus- I did some basic visualizations using Google Data Studio. 
 
-#Project Breakdown
+# Project Breakdown
 
 This entire project lives in a Google Cloud Platform project called ``thermostat-data-pipeline``
 
-##Getting thermostat events
+## Getting thermostat events
 
 The setup for getting device events from the thermostat was relatively simple, thanks to Google's (new?) Device Access service. For a fee you can register your devices for API/programmatic access. I then created a project in Device Access. Then I registered my GCP project as an Oauth client- allowing us to use the Device Access APIs in our GCP project. Device Access gives us a Pub/Sub Topic out of the box to use to get device events. 
 
