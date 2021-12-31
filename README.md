@@ -25,7 +25,7 @@ The setup for getting device events from the thermostat was relatively simple, t
 
 ## Pub/Sub
 
-Currently, I have two subscriptions on the device events topic- `nest-device-events-a` and `nest-device-events-b`. This allows me to have separate downstream processes that receive all device events. My Dataflow jobs filter ignore event data that is unneeded. 
+Currently, I have two subscriptions on the device events topic- `nest-device-events-a` and `nest-device-events-b`. This allows me to have separate downstream processes that receive all device events. My Dataflow jobs filter event data that is unneeded. 
 
 The screenshot below shows an example of the messages coming from the thermostat
 
