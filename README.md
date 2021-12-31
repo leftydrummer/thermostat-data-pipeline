@@ -25,4 +25,55 @@ The setup for getting device events from the thermostat was relatively simple, t
 
 ## Pub/Sub
 
+Currently, I have two subscriptions on the device events topic- `nest-device-events-a` and `nest-device-events-b`. This allows me to have separate downstream processes that receive all device events. My Dataflow jobs filter ignore event data that is unneeded. 
+
+The screenshot below shows an example of the messages coming from the thermostat
+
+![](/images/pubsub2.png)
+
+##Dataflow/Apache Beam
+
+For the purposes of this pipeline, I only need a small amount of data. I want to know when the ambient temperature changes, and when the ambient humidity changes. 
+
+I currently have 2 Dataflow jobs -- `HumidityDataPipeline` and `TemperatureDataPipeline`
+
+These jobs use the Apache Beam programming model and are written in Java. The basic flow for both jobs is:
+
+1. Set the pipeline options for running on the Dataflow service
+2. Outline the destination BigQuery table schema
+3. Read in PubSub events
+4. Filter out non-pertinent messages
+5. Extract the timestamp and new sensor value for either `TEMP` or `HUMIDITY`
+6. Write the result as a row to BigQuery
+
+For the Temperature job we also calculate the Fahrenheit value, as the thermostat sends it in Celsius. The code for these jobs is available in the above repo.
+
+![](/images/dataflow.png)
+
+## BiqQuery
+
+My BigQuery tables have a very simple schema. We have a dataset called `thermo_events` and two tables:
+
+`humidity_events` 
+ - `timestamp_utc`: type `TIMESTAMP`, `humidity_percent`: type `FLOAT` 
+
+`temp_events`
+- `timestamp_utc`: type `TIMESTAMP`, `temp_f`: type `FLOAT` 
+
+![](/images/bigquery.png)
+
+## Google Data Studio visualizations
+
+Finally, in order to do something neat with all this data, I made some basic charts in Google Data Studio to visualize the BigQuery data. Data Studio comes with an out-of-the-box connector for BigQuery, making it very easy to import and use data from those tables.
+
+This report shows sensor events over the last day, as well as the average reading over the last 24 hours. 
+
+You can view the live report [here](https://datastudio.google.com/reporting/2e08ab9b-9beb-4a15-8214-a287ffff95c6)! 
+
+![](/images/gds.png)
+
+
+
+
+
 
