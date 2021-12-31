@@ -50,7 +50,7 @@ For the Temperature job we also calculate the Fahrenheit value, as the thermosta
 
 ![](/images/dataflow.png)
 
-## BiqQuery
+## BigQuery
 
 My BigQuery tables have a very simple schema. We have a dataset called `thermo_events` and two tables:
 
