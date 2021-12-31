@@ -23,4 +23,6 @@ The setup for getting device events from the thermostat was relatively simple, t
 
 ![](/images/deviceaccess.png)
 
+## Pub/Sub
+
 
