@@ -46,7 +46,7 @@ These jobs use the Apache Beam programming model and are written in Java. The ba
 5. Extract the timestamp and new sensor value for either `TEMP` or `HUMIDITY`
 6. Write the result as a row to BigQuery
 
-For the Temperature job we also calculate the Fahrenheit value, as the thermostat sends it in Celsius. The code for these jobs is available in the above repo.
+For the Temperature job we also calculate the Fahrenheit value, as the thermostat sends it in Celsius. The code for these jobs is available in the above repo under src/main/java/com/neilldev/nest/PipelineJobs/.
 
 ![](/images/dataflow.png)
 
