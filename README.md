@@ -31,7 +31,7 @@ The screenshot below shows an example of the messages coming from the thermostat
 
 ![](/images/pubsub2.png)
 
-##Dataflow/Apache Beam
+## Dataflow/Apache Beam
 
 For the purposes of this pipeline, I only need a small amount of data. I want to know when the ambient temperature changes, and when the ambient humidity changes. 
 
